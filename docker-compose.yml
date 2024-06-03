@@ -7,22 +7,22 @@ services:
     networks:
       - go-db
 
-  go-db-migrator:
-    build: ./go-db-migrator
-    container_name: go-db-migrator
+  db-migrator:
+    build: db-migrator
+    container_name: db-migrator
     command: liquibase status
     volumes:
       - liquibase-data:/liquibase/changelog
     depends_on:
       - cassandra-db
     networks:
-      - go-db
+      - db
 
 volumes:
   liquibase-data:
     external: true
 
 networks:
-  go-db:
-    name: go-db
+  db:
+    name: db
     driver: bridge
