@@ -1,0 +1,28 @@
+services:
+  cassandra-db:
+    image: "cassandra:4.1"
+    ports:
+      - "9042:9042"
+      - "7000:7000"
+    networks:
+      - go-db
+
+  go-db-migrator:
+    build: ./go-db-migrator
+    container_name: go-db-migrator
+    command: liquibase status
+    volumes:
+      - liquibase-data:/liquibase/changelog
+    depends_on:
+      - cassandra-db
+    networks:
+      - go-db
+
+volumes:
+  liquibase-data:
+    external: true
+
+networks:
+  go-db:
+    name: go-db
+    driver: bridge
