@@ -1,28 +1,53 @@
 services:
-  cassandra-db:
+  cassandra:
+    container_name: cassandra
     image: "cassandra:4.1"
-    ports:
-      - "9042:9042"
-      - "7000:7000"
     networks:
-      - db
+      - sky
+    volumes:
+      - cassandra:/var/lib/cassandra
+    healthcheck:
+      test: cqlsh -e HELP
+      interval: 1s
+      start_interval: 1s
+      timeout: 1s
+      retries: 60
+
+  cassandra-seeder:
+    container_name: cassandra-seeder
+    image: "cassandra:4.1"
+    networks:
+      - sky
+    command: >
+     cqlsh cassandra 9042 -e 
+      "CREATE KEYSPACE IF NOT EXISTS shop WITH REPLICATION = { 'class': 'SimpleStrategy', 'replication_factor': 1 };"
+    depends_on:
+      cassandra:
+        condition: service_healthy
 
   db-migrator:
     build: db-migrator
     container_name: db-migrator
-    command: liquibase status
-    volumes:
-      - liquibase-data:/liquibase/changelog
+    command: tail -f /dev/null
+    environment:
+      - LIQUIBASE_COMMAND_USERNAME=cassandra
+      - LIQUIBASE_COMMAND_PASSWORD=cassandra
+      - LIQUIBASE_COMMAND_CHANGELOG_FILE=changelog.xml
+      - LIQUIBASE_COMMAND_DRIVER=com.ing.data.cassandra.jdbc.CassandraDriver
+      - LIQUIBASE_COMMAND_URL=jdbc:cassandra://cassandra:9042/shop?compliancemode=Liquibase&localdatacenter=datacenter1
     depends_on:
-      - cassandra-db
+      cassandra:
+        condition: service_healthy
     networks:
-      - db
-
-volumes:
-  liquibase-data:
-    external: true
+      - sky
+    volumes:
+      - ./db-migrator/changelog.xml:/liquibase/changelog.xml
+      - ./db-migrator/changesets/:/liquibase/changesets/
 
 networks:
-  db:
-    name: db
+  sky:
+    name: sky
     driver: bridge
+
+volumes:
+  cassandra:
