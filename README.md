@@ -1,7 +1,4 @@
-# Hathor Database Migrator
-
-The Hathor Database Migrator is a docker image which uses liquibase to run database migrations.
-It currently only supports Cassandra but, support for more databases can be added later.
+# Cassandra DB migrator
 
 ## Local
 To run the migrator locally use `docker-compose up`: a dockerised Cassandra instance will be launched and seeded with a keyspace called `shop`.
